@@ -1,4 +1,4 @@
-""" from django.shortcuts import render
+from django.shortcuts import render
 
 
 def index(request):
@@ -9,4 +9,3 @@ def room(request, room_name):
     return render(request, 'chat/room.html', {
         'room_name': room_name
     })
- """
