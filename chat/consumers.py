@@ -1,38 +1,42 @@
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
+""" 
+비동기식으로 변경
 
-class ChatConsumer(WebsocketConsumer):
-    # connect : 사용자와 websocket 연결이 맺어졌을때 호출
-    def connect(self):
+사실, 기존의 동기방식은 비동기 방식에 비해, I/O가 끝날때까지 
+계속 기다려야 하므로 비효율 적이라는 단점이 존재한다.
+
+하지만, 비동기로 작성하는 경우 I/O가 끝나지 않아도 즉시 결과값이 리턴된다.
+따라서, I/O과 완료되면 완료된거에 따른 콜백함수가 호출되는 방식으로 진행된다.
+때문에, 계속 다른일을 할 수 있어서 더 효율적이게 된다.
+
+"""
+
+
+class ChatConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'chat_%s' % self.room_name
 
-        # "room" 그룹에 가입
-        async_to_sync(self.channel_layer.group_add)(
+        await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
 
-        self.accept()
+        await self.accept()
 
-    # disconnect : 사용자와 websocket 연결이 끊겼을때 호출
-    def disconnect(self, close_code):
-        # "room" 그룹에서 탈퇴
-        async_to_sync(self.channel_layer.group_discard)(
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
-    # 웹소켓 으로 부터 메시지 수신
-    # receive : 사용자가 메시지를 보내면 호출 됨
-    def receive(self, text_data):
+    async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
 
-        # "room" 그룹에 메시지 전송
-        async_to_sync(self.channel_layer.group_send)(
+        await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
@@ -40,11 +44,9 @@ class ChatConsumer(WebsocketConsumer):
             }
         )
 
-    # "room" 그룹에서 메시지 전송
-    def chat_message(self, event):
+    async def chat_message(self, event):
         message = event['message']
 
-        # 웹 소켓으로 메시지 전송
-        self.send(text_data=json.dumps({
+        await self.send(text_data=json.dumps({
             'message': message
         }))
