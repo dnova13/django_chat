@@ -10,12 +10,16 @@
 7. config 폴더 최상단에 빼옴.
 8. python manage.py startapp chat
 ```
-  
 
+<br><br>    
+   
+# other settings  
+#### settings.py
 ```
-# mysite/settings.py
+# config/settings.py
 INSTALLED_APPS = [
     'chat',
+    'channel',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -25,11 +29,26 @@ INSTALLED_APPS = [
 ]
 ```
 
+#### folder 
 ```
 chat/
     __init__.py
-    templates/
+    views.py
+templates/
         chat/
             index.html
-    views.py
 ```
+
+
+#### redis setting
+```
+pipenv install channels_redis
+docker run -p 6379:6379 -d redis:6.2.6
+```
+
+  
+<br><br>
+
+# ERR
+1. Redis ERR unknown command 'BZPOPMIN' : 최신버전 설치  
+   link : https://github.com/tporadowski/redis/releases
